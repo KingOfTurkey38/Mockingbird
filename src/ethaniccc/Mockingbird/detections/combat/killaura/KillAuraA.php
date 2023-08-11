@@ -8,6 +8,7 @@ use pocketmine\entity\Entity;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
+use pocketmine\network\mcpe\protocol\types\inventory\UseItemOnEntityTransactionData;
 
 /**
  * Class KillAuraA
@@ -25,7 +26,7 @@ class KillAuraA extends Detection{
     }
 
     public function handleReceive(DataPacket $packet, User $user): void{
-        if($packet instanceof InventoryTransactionPacket && $packet->transactionType === InventoryTransactionPacket::TYPE_USE_ITEM_ON_ENTITY && $packet->trData->actionType === InventoryTransactionPacket::USE_ITEM_ON_ENTITY_ACTION_ATTACK){
+        if($packet instanceof InventoryTransactionPacket && $packet->trData->getTypeId() === InventoryTransactionPacket::TYPE_USE_ITEM_ON_ENTITY && $packet->trData->getActionType() === UseItemOnEntityTransactionData::ACTION_ATTACK){
             $ent = $user->player->getLevelNonNull()->getEntity($packet->trData->entityRuntimeId);
             if($ent !== null && $this->lastEntity !== null && $ent->getId() !== $this->lastEntity->getId() && $ent->distance($this->lastEntity) > 2){
                 ++$this->entities;

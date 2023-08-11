@@ -39,7 +39,7 @@ class MouseRecorder extends AsyncTask{
     }
 
     public function finish(User $user) : void{
-        $this->storeLocal([$user, $this->getAdmin()]);
+        $this->storeLocal("data", [$user, $this->getAdmin()]);
         $this->isRunning = false;
         Server::getInstance()->getAsyncPool()->submitTask($this);
     }
@@ -48,7 +48,9 @@ class MouseRecorder extends AsyncTask{
         return $this->isRunning ? self::$adminStorage[spl_object_hash($this)] : null;
     }
 
-    public function onRun(){
+
+
+    public function onRun(): void{
         $values = [];
         foreach((array)$this->rotations as $pair){
             /** @var Pair $pair */
@@ -69,8 +71,8 @@ class MouseRecorder extends AsyncTask{
         $this->setResult($response);
     }
 
-    public function onCompletion(Server $server){
-        [$u, $admin] = $this->fetchLocal();
+    public function onCompletion(Server $server): void{
+        [$u, $admin] = $this->fetchLocal("data");
         $result = $this->getResult();
         $admin->sendMessage($result);
         // kermit

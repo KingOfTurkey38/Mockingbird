@@ -8,6 +8,7 @@ use ethaniccc\Mockingbird\user\User;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
+use pocketmine\network\mcpe\protocol\types\PlayerAction;
 
 /**
  * Class FlyB
@@ -33,9 +34,9 @@ class FlyB extends Detection implements CancellableMovement{
             // 0.00001 off???
             $this->modulo = fmod(round($user->moveData->location->y - 0.00001, 6), 1 / 64);
             $this->lastOnGround = $this->modulo === 0.0;
-        } elseif($packet instanceof PlayerActionPacket && $packet->action === PlayerActionPacket::ACTION_JUMP){
+        } elseif($packet instanceof PlayerActionPacket && $packet->action === PlayerAction::JUMP){
             $rounded = round($user->moveData->location->y, 6) - 0.00001;
-            if(!$this->lastOnGround && $user->moveData->offGroundTicks > 1 && !$user->player->isImmobile() && $user->timeSinceTeleport >= 10){
+            if(!$this->lastOnGround && $user->moveData->offGroundTicks > 1 && !$user->player->hasNoClientPredictions() && $user->timeSinceTeleport >= 10){
                 $this->fail($user, "modulo={$this->modulo} y=$rounded offGround={$user->moveData->offGroundTicks}");
             } else {
                 $this->reward($user, 0.05);

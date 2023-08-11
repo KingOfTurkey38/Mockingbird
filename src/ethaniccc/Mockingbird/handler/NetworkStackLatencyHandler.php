@@ -18,7 +18,7 @@ class NetworkStackLatencyHandler{
     public static function send(User $user, NetworkStackLatencyPacket $packet, callable $onResponse) : void{
         if($packet->needResponse && $user->loggedIn){
             $timestamp = $packet->timestamp;
-            $user->player->dataPacket($packet);
+            $user->player->getNetworkSession()->sendDataPacket($packet);
             if(!isset(self::$list[$user->hash])){
                 self::$list[$user->hash] = [];
             }

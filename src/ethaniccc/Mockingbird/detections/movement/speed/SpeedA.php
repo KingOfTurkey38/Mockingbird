@@ -41,10 +41,10 @@ class SpeedA extends Detection implements CancellableMovement{
                 && $user->hasReceivedChunks){
                     $canFlag = true;
                     foreach($user->player->getArmorInventory()->getContents() as $item){
-                        if($item->hasEnchantment(Enchantment::DEPTH_STRIDER) && $user->moveData->liquidTicks < 10){
-                            $canFlag = false;
-                            break;
-                        }
+                       //if($item->hasEnchantment(Enchantment::DEPTH_STRIDER) && $user->moveData->liquidTicks < 10){
+                       //    $canFlag = false;
+                       //    break;
+                       //}
                     }
                     if($canFlag && ++$this->preVL >= 3){
                         $this->fail($user, "e=$equalness cXZ=$currentXZ lXZ=$lastXZ");

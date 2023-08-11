@@ -3,10 +3,13 @@
 namespace ethaniccc\Mockingbird\threads;
 
 use ethaniccc\Mockingbird\utils\MathUtils;
-use pocketmine\Thread;
+use pmmp\thread\Thread as NativeThread;
+use pocketmine\thread\Thread;
+use pmmp\thread\ThreadSafeArray;
 use pocketmine\snooze\SleeperNotifier;
+use pocketmine\thread\log\AttachableThreadSafeLogger;
 
-class CalculationThread extends Thread{
+class CalculationThread extends Thread {
 
     private $todo;
     private $done;
@@ -20,18 +23,18 @@ class CalculationThread extends Thread{
     private $tickSpeed = 1;
     private $lastTick;
 
-    public function __construct(\AttachableThreadedLogger $logger, SleeperNotifier $notifier){
-        $this->todo = new \Threaded();
-        $this->done = new \Threaded();
+    public function __construct(AttachableThreadSafeLogger $logger, SleeperNotifier $notifier){
+        $this->todo = new ThreadSafeArray();
+        $this->done = new ThreadSafeArray();
         $this->logger = $logger;
         $this->id = self::$currentMaxID++;
         $this->notifier = $notifier;
         self::$finishCallableList[$this->id] = [];
-        $this->setClassLoader();
+        //$this->setClassLoader();
     }
 
-    public function run(){
-        $this->registerClassLoader();
+    protected function onRun() : void{
+        //$this->registerClassLoader();
         MathUtils::init();
         while($this->running){
             // results will be in batches
@@ -57,6 +60,13 @@ class CalculationThread extends Thread{
         }
     }
 
+
+    public function start(int $options = NativeThread::INHERIT_NONE): bool
+    {
+        $this->running = true;
+        return parent::start($options);
+    }
+
     public function handleServerTick() : void{
         if($this->lastTick === null){
             $this->lastTick = microtime(true);
@@ -66,10 +76,7 @@ class CalculationThread extends Thread{
         }
     }
 
-    public function start(int $options = PTHREADS_INHERIT_ALL) : bool{
-        $this->running = true;
-        return parent::start($options);
-    }
+
 
     /**
      * @param callable $do - The callable that should run on the separate thread
@@ -97,9 +104,9 @@ class CalculationThread extends Thread{
         return $finished;
     }
 
-    public function quit(){
+    public function quit(): void
+    {
         $this->running = false;
         parent::quit();
     }
-
 }

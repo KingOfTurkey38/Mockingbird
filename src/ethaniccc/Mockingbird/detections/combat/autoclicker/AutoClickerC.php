@@ -9,6 +9,7 @@ use ethaniccc\Mockingbird\utils\EvictingList;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
 /**
  * Class AutoClickerC
@@ -29,7 +30,7 @@ class AutoClickerC extends Detection{
     }
 
     public function handleReceive(DataPacket $packet, User $user): void{
-        if(($packet instanceof InventoryTransactionPacket && $packet->transactionType === InventoryTransactionPacket::TYPE_USE_ITEM_ON_ENTITY) || ($packet instanceof LevelSoundEventPacket && $packet->sound === LevelSoundEventPacket::SOUND_ATTACK_NODAMAGE)){
+        if(($packet instanceof InventoryTransactionPacket && $packet->trData->getTypeId() === InventoryTransactionPacket::TYPE_USE_ITEM_ON_ENTITY) || ($packet instanceof LevelSoundEventPacket && $packet->sound === LevelSoundEvent::ATTACK_NODAMAGE)){
             if($user->clickData->tickSpeed <= 4){
                 if(++$this->clicks >= $this->getSetting('samples')){
                     $samples = $user->clickData->getTickSamples($this->getSetting('samples'));

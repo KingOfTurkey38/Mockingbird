@@ -21,15 +21,15 @@ class ScaffoldA extends Detection{
     }
 
     public function handleReceive(DataPacket $packet, User $user): void{
-        if($packet instanceof InventoryTransactionPacket && $packet->transactionType === InventoryTransactionPacket::TYPE_USE_ITEM && $packet->trData->actionType === InventoryTransactionPacket::USE_ITEM_ACTION_CLICK_BLOCK){
-            $placedBlockPos = (new Vector3($packet->trData->x, $packet->trData->y, $packet->trData->z))->getSide($packet->trData->face);
-            $subVec = $placedBlockPos->subtract($user->moveData->location->asVector3()->floor());
-            if($subVec->y === -1 && $subVec->lengthSquared() === 1.0 && $packet->trData->clickPos->distanceSquared($user->zeroVector) === 0.0){
-                $this->fail($user);
-            }
-            if($this->isDebug($user))
-                $user->sendMessage("subVec=$subVec click={$packet->trData->clickPos}");
-        }
+        //if($packet instanceof InventoryTransactionPacket && $packet->transactionType === InventoryTransactionPacket::TYPE_USE_ITEM && $packet->trData->actionType === InventoryTransactionPacket::USE_ITEM_ACTION_CLICK_BLOCK){
+        //    $placedBlockPos = (new Vector3($packet->trData->x, $packet->trData->y, $packet->trData->z))->getSide($packet->trData->face);
+        //    $subVec = $placedBlockPos->subtractVector($user->moveData->location->asVector3()->floor());
+        //    if($subVec->y === -1 && $subVec->lengthSquared() === 1.0 && $packet->trData->clickPos->distanceSquared($user->zeroVector) === 0.0){
+        //        $this->fail($user);
+        //    }
+        //    if($this->isDebug($user))
+        //        $user->sendMessage("subVec=$subVec click={$packet->trData->clickPos}");
+        //}
     }
 
 }

@@ -7,10 +7,8 @@ use pocketmine\block\Block;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 
-class AABB extends AxisAlignedBB{
+class AABB extends CustomBB {
 
-    public $minX, $minY, $minZ;
-    public $maxX, $maxY, $maxZ;
     public $minVector, $maxVector;
 
     public const NO_INTERSECTION = -69.0;
@@ -42,18 +40,16 @@ class AABB extends AxisAlignedBB{
     }
 
     public static function fromBlock(Block $block) : AABB{
-        $b = $block->getBoundingBox();
-        if($b !== null) {
-            return new AABB(
-                $b->minX, $b->minY, $b->minZ,
-                $b->maxX, $b->maxY, $b->maxZ
-            );
-        } else {
-            return new AABB(
-                $block->getX(), $block->getY(), $block->getZ(),
-                $block->getX() + 1, $block->getY() + 1, $block->getZ() + 1
-            );
-        }
+        $b = new AxisAlignedBB(
+            $block->getPosition()->x,
+            $block->getPosition()->y,
+            $block->getPosition()->z,
+            $block->getPosition()->x + 1,
+            $block->getPosition()->y + 1,
+            $block->getPosition()->z + 1
+        );
+
+        return $b;
     }
 
     public function clone() : AABB{
@@ -67,11 +63,6 @@ class AABB extends AxisAlignedBB{
     public function grow(float $x, float $y, float $z) : AABB{
         return new AABB($this->minX - $x, $this->minY - $y, $this->minZ - $z, $this->maxX + $x, $this->maxY, $this->maxZ);
     }
-
-    public function stretch(float $x, float $y, float $z) : AABB{
-        return new AABB($this->minX, $this->minY, $this->minZ, $this->maxX + $x, $this->maxY, $this->maxZ);
-    }
-
     public function contains(Vector3 $pos) : bool{
         return $pos->getX() <= $this->maxX
             && $pos->getY() <= $this->maxY

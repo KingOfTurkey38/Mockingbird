@@ -17,7 +17,7 @@ class BanTask extends Task{
         $this->message = $message;
     }
 
-    public function onRun(int $currentTick){
+    public function onRun(): void{
         $player = $this->user->player;
         Server::getInstance()->getNameBans()->addBan($player->getName(), $this->message, null, "Mockingbird Anti-Cheat");
         $player->kick($this->message, false);

@@ -42,9 +42,8 @@ use ethaniccc\Mockingbird\tasks\DebugWriteTask;
 use ethaniccc\Mockingbird\threads\CalculationThread;
 use ethaniccc\Mockingbird\user\UserManager;
 use ethaniccc\Mockingbird\utils\MathUtils;
-use ethaniccc\MockingbirdPremiumLoader\Loader;
 use pocketmine\event\HandlerList;
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
@@ -96,11 +95,11 @@ final class Mockingbird extends PluginBase{
         MathUtils::init();
         new MockingbirdListener();
         $this->loadDefaultChecks();
-        try{
-            Loader::loadChecks();
-        } catch(\Error $e){
-            $this->getLogger()->debug($e->getMessage());
-        }
+        //try{
+        //    Loader::loadChecks();
+        //} catch(\Error $e){
+        //    $this->getLogger()->debug($e->getMessage());
+        //}
         $this->registerCommands();
         $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(int $currentTick) : void{
             // first handle things with user tick processors
@@ -235,8 +234,12 @@ final class Mockingbird extends PluginBase{
         return true;
     }
 
-    public function onDisable(){
-        HandlerList::unregisterAll($this);
+
+
+
+    public function onDisable(): void{
+
+        //HandlerList::unregister($this);
         $this->calculationThread->quit();
         if($this->getConfig()->get('upload_debug')){
             $options = array(

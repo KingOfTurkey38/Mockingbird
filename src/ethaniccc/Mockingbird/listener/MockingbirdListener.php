@@ -15,13 +15,13 @@ use pocketmine\event\server\CommandEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\ContainerOpenPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\NetworkStackLatencyPacket;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
 use pocketmine\network\mcpe\protocol\types\PlayerMovementType;
 use pocketmine\Player;
@@ -36,17 +36,17 @@ class MockingbirdListener implements Listener{
     /** @priority HIGH */
     function inbound(DataPacketReceiveEvent $event) : void{
         $packet = $event->getPacket();
-        $player = $event->getPlayer();
+        $player = $event->getOrigin()->getPlayer();
         if($packet instanceof LoginPacket){
             $user = new User($player);
             UserManager::getInstance()->register($user);
         } elseif($packet instanceof PlayerAuthInputPacket){
-            $event->setCancelled();
+            $event->cancel();
         }
 
         $user = UserManager::getInstance()->get($player);
         if($user !== null){
-            if($user->debugChannel === 'clientpk' && !in_array(get_class($packet), [BatchPacket::class, PlayerAuthInputPacket::class, NetworkStackLatencyPacket::class])){
+            if($user->debugChannel === 'clientpk' && !in_array(get_class($packet), [PlayerAuthInputPacket::class, NetworkStackLatencyPacket::class])){
                 $user->sendMessage(get_class($packet));
             }
             if($user->isPacketLogged){
@@ -72,6 +72,7 @@ class MockingbirdListener implements Listener{
                 $packet->isMovementServerAuthoritative = true;
             }
         }
+
         if($packet instanceof BatchPacket){
             try{
                 try{

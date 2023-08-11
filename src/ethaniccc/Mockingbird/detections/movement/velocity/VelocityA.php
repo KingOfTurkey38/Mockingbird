@@ -8,6 +8,7 @@ use ethaniccc\Mockingbird\user\User;
 use ethaniccc\Mockingbird\utils\EvictingList;
 use pocketmine\event\entity\EntityMotionEvent;
 use pocketmine\event\Event;
+use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\NetworkStackLatencyPacket;
@@ -54,7 +55,8 @@ class VelocityA extends Detection implements CancellableMovement{
                 $collisionAABB->minY = $collisionAABB->maxY;
                 $collisionAABB->maxY += 0.2;
                 $collisionAABB->expand(0.2, 0, 0.2);
-                if($percentage < $this->getSetting('percentage', 99.99) && count($user->player->getLevel()->getCollisionBlocks($collisionAABB, true)) === 0 && $user->moveData->liquidTicks >= 10 && $user->moveData->cobwebTicks >= 10
+                $bb = new AxisAlignedBB($collisionAABB->minX, $collisionAABB->minY, $collisionAABB->minZ, $collisionAABB->maxX, $collisionAABB->maxY, $collisionAABB->maxZ);
+                if($percentage < $this->getSetting('percentage', 99.99) && count($user->player->getWorld()->getCollisionBlocks($bb, true)) === 0 && $user->moveData->liquidTicks >= 10 && $user->moveData->cobwebTicks >= 10
                     && $user->moveData->levitationTicks >= 10 && $user->timeSinceStoppedFlight >= 10 && $user->timeSinceStoppedGlide >= 10){
                     if(++$this->preVL >= 6){
                         $roundedPercentage = round($percentage, 3); $roundedBuffer = round($this->preVL, 2);

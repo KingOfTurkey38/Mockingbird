@@ -4,8 +4,7 @@ namespace ethaniccc\Mockingbird\user\data;
 
 use ethaniccc\Mockingbird\utils\boundingbox\AABB;
 use pocketmine\block\Block;
-use pocketmine\level\Location;
-use pocketmine\level\Position;
+use pocketmine\entity\Location;
 use pocketmine\math\Vector3;
 
 class MoveData{

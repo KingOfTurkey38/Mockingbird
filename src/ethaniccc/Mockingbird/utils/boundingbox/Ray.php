@@ -13,7 +13,7 @@ class Ray{
     public $origin, $direction;
 
     public static function from(Entity $player) : Ray{
-        return new Ray($player->add(0, $player->getEyeHeight(), 0), $player->getDirectionVector());
+        return new Ray($player->getPosition()->add(0, $player->getEyeHeight(), 0), $player->getDirectionVector());
     }
 
     public static function fromUser(User $user) : Ray{
@@ -34,7 +34,7 @@ class Ray{
     }
 
     public function traverse(float $travel) : Vector3{
-        return $this->origin->add($this->direction->multiply($travel));
+        return $this->origin->addVector($this->direction->multiply($travel));
     }
 
 }

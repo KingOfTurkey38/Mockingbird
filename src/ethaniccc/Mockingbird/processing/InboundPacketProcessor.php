@@ -2,6 +2,7 @@
 
 namespace ethaniccc\Mockingbird\processing;
 
+use Attribute;
 use ethaniccc\Mockingbird\handler\NetworkStackLatencyHandler;
 use ethaniccc\Mockingbird\Mockingbird;
 use ethaniccc\Mockingbird\user\User;
@@ -11,21 +12,20 @@ use ethaniccc\Mockingbird\utils\MathUtils;
 use ethaniccc\Mockingbird\utils\PacketUtils;
 use pocketmine\block\Air;
 use pocketmine\block\Block;
+use pocketmine\block\BlockTypeIds;
 use pocketmine\block\Cobweb;
 use pocketmine\block\Ladder;
 use pocketmine\block\Liquid;
-use pocketmine\block\StillWater;
 use pocketmine\block\Transparent;
 use pocketmine\block\UnknownBlock;
+use pocketmine\block\utils\DyeColor;
 use pocketmine\block\Vine;
 use pocketmine\block\Water;
+use pocketmine\entity\AttributeFactory;
 use pocketmine\entity\Effect;
+use pocketmine\entity\effect\VanillaEffects;
+use pocketmine\entity\Location;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIds;
-use pocketmine\level\Location;
-use pocketmine\level\particle\DustParticle;
-use pocketmine\level\particle\FlameParticle;
-use pocketmine\level\Position;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
@@ -42,6 +42,7 @@ use pocketmine\Player;
 use pocketmine\Server;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\particle\DustParticle;
 
 class InboundPacketProcessor extends Processor{
 
@@ -59,11 +60,11 @@ class InboundPacketProcessor extends Processor{
                 if(!$user->loggedIn){
                     return;
                 }
-                $location = Location::fromObject($packet->getPosition()->subtract(0, 1.62, 0), $user->player->getLevel(), $packet->getYaw(), $packet->getPitch());
+                $location = Location::fromObject($packet->getPosition()->subtract(0, 1.62, 0), $user->player->getWorld(), $packet->getYaw(), $packet->getPitch());
                 if($user->moveData->forceMoveSync !== null){
                     if($location->distanceSquared($user->moveData->forceMoveSync) > 1){
                         if($user->debugChannel === 'teleport') $user->sendMessage('expected pre-teleport movement');
-                    } elseif((!$user->player->isAlive() || !$user->loggedIn) && $location->distanceSquared($user->player) > 0.01){
+                    } elseif((!$user->player->isAlive() || !$user->loggedIn) && $location->distanceSquared($user->player->getPosition()) > 0.01){
                         if($user->debugChannel === 'teleport') $user->sendMessage('bad movement, not alive / has not spawned');
                     } else {
                         $user->moveData->forceMoveSync = null;
@@ -84,7 +85,7 @@ class InboundPacketProcessor extends Processor{
                 ++$user->timeSinceTeleport;
                 if($user->timeSinceTeleport > 0 && $hasMoved){
                     $user->moveData->lastMoveDelta = $user->moveData->moveDelta;
-                    $user->moveData->moveDelta = $user->moveData->location->subtract($user->moveData->lastLocation)->asVector3();
+                    $user->moveData->moveDelta = $user->moveData->location->subtractVector($user->moveData->lastLocation)->asVector3();
                     $user->moveData->lastYawDelta = $user->moveData->yawDelta;
                     $user->moveData->lastPitchDelta = $user->moveData->pitchDelta;
                     $user->moveData->yawDelta = abs(abs($user->moveData->lastYaw) - abs($user->moveData->yaw));
@@ -125,13 +126,13 @@ class InboundPacketProcessor extends Processor{
                 } else {
                     $user->timeSinceStoppedFlight = 0;
                 }
-                if($user->isGliding || $user->player->isSpectator() || $user->player->isImmobile()){
+                if($user->isGliding || $user->player->isSpectator() || $user->player->hasNoClientPredictions()){
                     $user->timeSinceStoppedGlide = 0;
                 } else {
                     ++$user->timeSinceStoppedGlide;
                 }
                 // 27 is the hardcoded effect ID for slow falling (I think...?)
-                if($user->player->getEffect(Effect::LEVITATION) !== null || $user->player->getEffect(27) !== null){
+                if($user->player->getEffects()->get(VanillaEffects::LEVITATION()) !== null){
                     $user->moveData->levitationTicks = 0;
                 } else {
                     ++$user->moveData->levitationTicks;
@@ -143,7 +144,7 @@ class InboundPacketProcessor extends Processor{
                 }
                 // 0.03 ^ 2
                 if($user->moveData->moveDelta->lengthSquared() > 0.0009){
-                    $speed = $user->player->getAttributeMap()->getAttribute(5)->getValue();
+                    $speed = $user->player->getAttributeMap()->get(\pocketmine\entity\Attribute::MOVEMENT_SPEED)->getValue();
                     if($user->debugChannel === 'speed'){
                         $user->sendMessage('speed=' . $speed);
                     }
@@ -188,8 +189,8 @@ class InboundPacketProcessor extends Processor{
                         for($z = $minZ; $z <= $maxZ; ++$z){
                             for($x = $minX; $x <= $maxX; ++$x){
                                 for($y = $minY; $y <= $maxY; ++$y){
-                                    $block = $user->player->getLevelNonNull()->getBlockAt($x, $y, $z);
-                                    if($block->getId() !== 0){
+                                    $block = $user->player->getWorld()->getBlockAt($x, $y, $z);
+                                    if($block->getTypeId() !== BlockTypeIds::AIR){
                                         $AABB = AABB::fromBlock($block);
                                         if(($dist = $AABB->collidesRay($ray, 0, 7)) !== -69.0){
                                             if($dist < $distance){
@@ -204,7 +205,7 @@ class InboundPacketProcessor extends Processor{
                         if($target instanceof Block){
                             $AABB = AABB::fromBlock($target);
                             foreach($AABB->getCornerVectors() as $cornerVector){
-                                $user->player->getLevelNonNull()->addParticle(new DustParticle($cornerVector, 0, 255, 255));
+                                $user->player->getWorld()->addParticle($cornerVector, new DustParticle(DyeColor::BLUE()->getRgbValue()));
                             }
                         }
                     }
@@ -212,13 +213,13 @@ class InboundPacketProcessor extends Processor{
                 // 0.03 ^ 2
                 if($user->moveData->moveDelta->lengthSquared() > 0.0009){
                     // should I be worried about performance here?
-                    $verticalBlocks = $user->player->getLevel()->getCollisionBlocks($user->moveData->AABB->expandedCopy(0.1, 0.2, 0.1));
-                    $horizontalBlocks = $user->player->getLevel()->getCollisionBlocks($user->moveData->AABB->expandedCopy(0.2, -0.1, 0.2));
+                    $verticalBlocks = $user->player->getWorld()->getCollisionBlocks($user->moveData->AABB->expandedCopy(0.1, 0.2, 0.1));
+                    $horizontalBlocks = $user->player->getWorld()->getCollisionBlocks($user->moveData->AABB->expandedCopy(0.2, -0.1, 0.2));
                     $ghostCollisions = 0;
                     $user->moveData->ghostCollisions = [];
                     $verticalAABB = $user->moveData->AABB->expandedCopy(0.1, 0.2, 0.1);
                     foreach($user->ghostBlocks as $block){
-                        if(!$block->canPassThrough() && AABB::fromBlock($block)->intersectsWith($verticalAABB, 0.0001)){
+                        if(!$block->canBeFlowedInto() && AABB::fromBlock($block)->intersectsWith($verticalAABB, 0.0001)){
                             $ghostCollisions++;
                             $user->moveData->ghostCollisions[] = $block;
                             break;
@@ -269,7 +270,8 @@ class InboundPacketProcessor extends Processor{
                         $otherGround = $movePacket->onGround ? 'true' : 'false';
                         $user->sendMessage('pmmp=' . $serverGround . ' mb=' . $otherGround);
                     }
-                    $user->player->handleMovePlayer($movePacket);
+                    //$user->player->handleMovement($movePacket);
+                    //$user->player->handleMovePlayer($movePacket);
                 }
                 $user->tickProcessor->process($packet, $user);
                 ++$this->tickSpeed;
